@@ -35,6 +35,12 @@ app.post("/urls", (req, res) => {
     console.log(req.body);  // Log the POST request body to the console
     res.send("Ok");         // Respond with 'Ok' (we will replace this)
   });
+  function randomString(length, chars) {
+    let result = '';
+    for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+    return result;
+}
+let rString = randomString(32, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
 
 // app.get("/", (req, res) => {
 //   res.send("Hello!");
