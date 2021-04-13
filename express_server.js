@@ -36,21 +36,34 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  console.log(req.params.shortURL);
+  // console.log(req.params.shortURL);
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
   res.render("urls_show", templateVars);
+  // res.redirect(urlDatabase[req.params.longURL]);
+  
 });
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = longURL;
+  
   console.log(urlDatabase); // Log the POST request body to the console
 
   res.redirect(`/urls/${shortURL}`); // Respond with 'Ok' (we will replace this)
 });
+app.get("/u/:shortURL", (req, res) => {
+  
+  const longURL = urlDatabase[req.params.shortURL]
+  console.log(req.params.shortURL);
+  res.redirect(longURL);
+});
+// app.get('*', (req, res) => {
+//   res.send('caught by the catchall route');
+// });
+
 
 // app.get("/", (req, res) => {
 //   res.send("Hello!");
