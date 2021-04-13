@@ -1,12 +1,12 @@
 const express = require("express");
 const app = express();
-// const morgan = require('morgan')
+const morgan = require('morgan')
 
 const PORT = 8080;
 app.set("view engine", "ejs");
 
-// const morganMiddleware = morgan('dev');
-// app.use(morganMiddleware);
+const morganMiddleware = morgan('dev');
+app.use(morganMiddleware);
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -15,6 +15,12 @@ const urlDatabase = {
 app.get("/urls", (req, res) => {
     const templateVars = { urls: urlDatabase };
     res.render("urls_index", templateVars);
+  });
+
+  app.get("/urls/:shortURL", (req, res) => {
+      console.log(req.params.shortURL)
+    const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
+    res.render("urls_show", templateVars);
   });
 
 
