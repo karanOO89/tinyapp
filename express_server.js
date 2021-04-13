@@ -3,6 +3,7 @@ const app = express();
 const morgan = require('morgan')
 
 const PORT = 8080;
+app.set("view engine", "ejs");
 
 const morganMiddleware = morgan('dev');
 app.use(morganMiddleware);
