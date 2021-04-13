@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
+    "start": "./node_modules/.bin/nodemon -L express_server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,7 +16,9 @@
     "install": "^0.13.0",
     "morgan": "^1.10.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/karanOO89/tinyapp.git"
