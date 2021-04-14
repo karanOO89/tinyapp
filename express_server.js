@@ -25,7 +25,7 @@ app.use(morganMiddleware);
 
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "9sm5xK": "http://www.google.com",
 };
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -43,27 +43,35 @@ app.get("/urls/:shortURL", (req, res) => {
   };
   res.render("urls_show", templateVars);
   // res.redirect(urlDatabase[req.params.longURL]);
-  
 });
 app.post("/urls", (req, res) => {
+  //=>main url pages
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = longURL;
-  
+
   console.log(urlDatabase); // Log the POST request body to the console
 
   res.redirect(`/urls/${shortURL}`); // Respond with 'Ok' (we will replace this)
 });
 app.get("/u/:shortURL", (req, res) => {
-  
-  const longURL = urlDatabase[req.params.shortURL]
+  //=> extracting the original long url from database
+
+  const longURL = urlDatabase[req.params.shortURL];
   console.log(req.params.shortURL);
   res.redirect(longURL);
+});
+app.post("/urls/:shortURL/delete", (req, res) => {
+  //=> added delete method
+
+  const urlToDelete = req.params.shortURL;
+  console.log(urlToDelete);
+  delete urlDatabase[urlToDelete];
+  res.redirect("/urls");
 });
 // app.get('*', (req, res) => {
 //   res.send('caught by the catchall route');
 // });
-
 
 // app.get("/", (req, res) => {
 //   res.send("Hello!");
