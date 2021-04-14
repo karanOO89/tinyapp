@@ -28,6 +28,25 @@ const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
+app.get("/userReg", (req, res) => {
+ 
+  const username = req.cookies.user;
+  const templateVars = { username: username };
+  res.render("user_registration",templateVars);
+});
+
+
+
+app.post("/userReg", (req, res) => {
+  console.log(req.params)
+   const username = req.cookies.user;
+   const templateVars = { username: username };
+  //  res.render("user_registration",templateVars);
+   res.render("urls_index",templateVars)
+ });
+
+
+
 app.get("/urls", (req, res) => {
   const username = req.cookies.user;
   // console.log(req.cookies)
@@ -61,7 +80,7 @@ app.post("/urls", (req, res) => {
 
   // console.log(urlDatabase); // Log the POST request body to the console
 
-  res.redirect(`/urls/${shortURL}`); // Respond with 'Ok' (we will replace this)
+  res.redirect(`/urls`); // Respond with 'Ok' (we will replace this)
 });
 app.get("/u/:shortURL", (req, res) => {
   //=> extracting the original long url from database
@@ -78,7 +97,7 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 app.post("/logout/:username", (req, res) => {
-  const username =req.params.username;
+  const username = req.params.username;
   res.clearCookie("user", username);
 
   res.redirect("/urls");
@@ -99,19 +118,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[urlToDelete];
   res.redirect("/urls");
 });
-// app.get('*', (req, res) => {
-//   res.send('caught by the catchall route');
-// });
-
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
