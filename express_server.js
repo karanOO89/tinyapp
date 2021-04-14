@@ -15,6 +15,9 @@ const morgan = require("morgan");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
+let cookie = require("cookie-parser");
+app.use(cookie());
+
 const PORT = 8080;
 app.set("view engine", "ejs");
 
@@ -26,18 +29,26 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const username = req.cookies.user;
+  // console.log(req.cookies)
+
+  const templateVars = { urls: urlDatabase, username: username };
+
   res.render("urls_index", templateVars);
 });
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const username = req.cookies.user;
+  const templateVars = { username: username };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   // console.log(req.params.shortURL);
+  const username = req.cookies.user;
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
+    username: username,
   };
   res.render("urls_show", templateVars);
   // res.redirect(urlDatabase[req.params.longURL]);
@@ -59,6 +70,20 @@ app.get("/u/:shortURL", (req, res) => {
   console.log(req.params.shortURL);
   res.redirect(longURL);
 });
+
+app.post("/login", (req, res) => {
+  const username = req.body.username.trim();
+  res.cookie("user", username);
+
+  res.redirect("/urls");
+});
+app.post("/logout/:username", (req, res) => {
+  const username =req.params.username;
+  res.clearCookie("user", username);
+
+  res.redirect("/urls");
+});
+
 app.post("/urls/:shortURL/update", (req, res) => {
   //=> added update method
   const toUpdateUrl = req.body.longURL;
