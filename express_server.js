@@ -106,8 +106,8 @@ const users = {
 };
 
 app.get("/userReg", (req, res) => {
-  const user = req.cookies.user;
-  const templateVars = { user: user };
+  const user = req.cookies["user_id"];
+  templateVars={ user : user}
   res.render("user_registration", templateVars);
 });
 app.post("/userReg", (req, res) => {
@@ -130,8 +130,9 @@ app.post("/userReg", (req, res) => {
   res.redirect("/urls");
 });
 app.get("/userLogin", (req, res) => {
-  const user = req.cookies.user;
-  res.render("user_login",user);
+  const user = req.cookies["user_id"];
+  templateVars={ user : user}
+  res.render("user_login",templateVars);
 });
 
 app.post("/userLogin", (req, res) => {
@@ -163,6 +164,7 @@ app.get("/urls", (req, res) => {
   const user = getEmailByUserId(userId);
   const url = getShortUrlById(userId)
   // console.log(">>>> ",url);
+  // if(userId = )
   const templateVars = { urls: url, user: user };
   console.log("> ",templateVars);
 
@@ -171,7 +173,7 @@ app.get("/urls", (req, res) => {
 });
 app.post("/urls", (req, res) => {
   //=>main url pages
-  console.log("..",req.body)
+  // console.log("..",req.body)
   const userID = req.cookies["user_id"];
   // console.log(req.cookies)
   const longURL = req.body.longURL;
@@ -195,6 +197,7 @@ app.get("/urls/:shortURL", (req, res) => {
   // console.log(req.params.shortURL);
   const userId = req.cookies["user_id"];
   const user = getEmailByUserId(userId);
+  if(urlDatabase[req.params.shortURL]["userID"] === userId ){
   console.log(req.params)
   const templateVars = {
     shortURL: req.params.shortURL,
@@ -204,6 +207,8 @@ app.get("/urls/:shortURL", (req, res) => {
   // console.log(">>>:",templateVars)
   res.render("urls_show", templateVars);
   // res.redirect(urlDatabase[req.params.longURL]);
+}
+res.status(403).send("not authorized action")
 });
 app.post("/urls/:shortURL/update", (req, res) => {
   //=> added update method
@@ -239,6 +244,14 @@ app.post("/logout", (req, res) => {
 
   res.redirect("/userLogin");
 });
+app.get("/", (req, res) => {
+  // const user = req.cookies["user_id"];
+  // // console.log(">>>>",user)
+  
+  // templateVars={ user : user}
+  // res.render("user_login",templateVars);
+  res.redirect("/userLogin");
+})
 
 
 app.listen(PORT, () => {
