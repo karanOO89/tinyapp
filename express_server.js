@@ -1,3 +1,19 @@
+const express = require("express");
+const app = express();
+const morgan = require("morgan");
+
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: true }));
+
+let cookie = require("cookie-parser");
+app.use(cookie());
+
+const PORT = 8080;
+app.set("view engine", "ejs");
+
+const morganMiddleware = morgan("dev");
+app.use(morganMiddleware);
+
 function generateRandomString() {
   let result = "";
   const length = 6;
@@ -18,30 +34,30 @@ function generateRandomID() {
 }
 
 function emailLookup(email, pass) {
-  if (email.length === 0 || pass.length === 0) return "nothing";
-
   for (let key in users) {
     if (users[key]["email"] === email) return "exist";
   }
 
   return true;
 }
+function findIdByEmail(email) {
+  for (let key in users) {
+    // console.log("hello there:",users[key]["id"]);
+    if (users[key]["email"] === email) {
+      // console.log("key tracer:",users[key].id)
+      return users[key].id
+    }
+  }
+}
 
-const express = require("express");
-const app = express();
-const morgan = require("morgan");
+function loginLookup(email, pass) {
+  for (let key in users) {
+    if (users[key]["email"] === email && users[key]["password"] === pass)
+      return true;
+  }
 
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({ extended: true }));
-
-let cookie = require("cookie-parser");
-app.use(cookie());
-
-const PORT = 8080;
-app.set("view engine", "ejs");
-
-const morganMiddleware = morgan("dev");
-app.use(morganMiddleware);
+  return false;
+}
 
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
@@ -51,7 +67,7 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "123",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -61,18 +77,42 @@ const users = {
 };
 
 app.get("/userReg", (req, res) => {
-  const username = req.cookies.user;   //=> cookie 
+  const username = req.cookies.user;
   const templateVars = { username: username };
   res.render("user_registration", templateVars);
 });
+app.get("/userLogin", (req, res) => {
+  const user = req.cookies.user;
+  res.render("user_login",user);
+});
+
+app.post("/userLogin", (req, res) => {
+console.log(req.body)
+  const email = req.body.email.trim();
+  const password = req.body.password;
+  // console.log(email);
+  if (email === "" || password === "") {
+    res.status(400).send("Enter Valid Credentials"); //=> credential & email lookup in database
+  }
+  if (!loginLookup(email, password)) {
+    res.status(400).send("Either Email Or Password Is Incorrect");
+  }
+  const id = findIdByEmail(email);
+  // console.log("key tracer:",id)
+  // const id = user[]
+  res.cookie("user_id", id);
+  res.redirect("/urls");
+});
+// app.post("/login", (req, res) => {
+// });
 
 //user registration
 app.post("/userReg", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
   if (emailLookup(email, password) === "nothing") {
-    res.status(400).send("Enter Valid Credentials");   //=> credential & email lookup in database
-  }                                                     
+    res.status(400).send("Enter Valid Credentials"); //=> credential & email lookup in database
+  }
   if (emailLookup(email, password) === "exist") {
     res.status(400).send("Email Already Exists");
   }
@@ -130,13 +170,6 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   console.log(req.params.shortURL);
   res.redirect(longURL);
-});
-
-app.post("/login", (req, res) => {
-  const username = req.body.username.trim();
-  res.cookie("user", username);
-
-  res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
