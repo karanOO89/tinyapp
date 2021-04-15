@@ -7,6 +7,25 @@ function generateRandomString() {
     result += chars[Math.floor(Math.random() * chars.length)];
   return result;
 }
+function generateRandomID() {
+  let result = "";
+  const length = 2;
+  const chars =
+    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  for (let i = length; i > 0; --i)
+    result += chars[Math.floor(Math.random() * chars.length)];
+  return result;
+}
+
+function emailLookup(email, pass) {
+  if (email.length === 0 || pass.length === 0) return "nothing";
+
+  for (let key in users) {
+    if (users[key]["email"] === email) return "exist";
+  }
+
+  return true;
+}
 
 const express = require("express");
 const app = express();
@@ -28,30 +47,51 @@ const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 app.get("/userReg", (req, res) => {
- 
-  const username = req.cookies.user;
+  const username = req.cookies.user;   //=> cookie 
   const templateVars = { username: username };
-  res.render("user_registration",templateVars);
+  res.render("user_registration", templateVars);
 });
 
-
-
+//user registration
 app.post("/userReg", (req, res) => {
-  console.log(req.params)
-   const username = req.cookies.user;
-   const templateVars = { username: username };
-  //  res.render("user_registration",templateVars);
-   res.render("urls_index",templateVars)
- });
-
-
+  let email = req.body.email;
+  let password = req.body.password;
+  if (emailLookup(email, password) === "nothing") {
+    res.status(400).send("Enter Valid Credentials");   //=> credential & email lookup in database
+  }                                                     
+  if (emailLookup(email, password) === "exist") {
+    res.status(400).send("Email Already Exists");
+  }
+  let id = generateRandomID();
+  (users[id] = {
+    id: id,
+    email: email,
+    password: password,
+  }),
+    res.cookie("user_id", id);
+  res.redirect("/urls");
+});
 
 app.get("/urls", (req, res) => {
-  const username = req.cookies.user;
+  const userId = req.cookies["user_id"];
   // console.log(req.cookies)
-
-  const templateVars = { urls: urlDatabase, username: username };
+  const user = users[userId];
+  // console.log(user);
+  const templateVars = { urls: urlDatabase, user: user };
 
   res.render("urls_index", templateVars);
 });
@@ -72,6 +112,7 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
   // res.redirect(urlDatabase[req.params.longURL]);
 });
+
 app.post("/urls", (req, res) => {
   //=>main url pages
   const longURL = req.body.longURL;
@@ -82,6 +123,7 @@ app.post("/urls", (req, res) => {
 
   res.redirect(`/urls`); // Respond with 'Ok' (we will replace this)
 });
+
 app.get("/u/:shortURL", (req, res) => {
   //=> extracting the original long url from database
 
@@ -96,20 +138,23 @@ app.post("/login", (req, res) => {
 
   res.redirect("/urls");
 });
-app.post("/logout/:username", (req, res) => {
-  const username = req.params.username;
-  res.clearCookie("user", username);
+
+app.post("/logout", (req, res) => {
+  // const username = req.params.username;
+  res.clearCookie("user_id");
 
   res.redirect("/urls");
 });
 
 app.post("/urls/:shortURL/update", (req, res) => {
   //=> added update method
+
   const toUpdateUrl = req.body.longURL;
   urlDatabase[req.params.shortURL] = toUpdateUrl;
 
-  res.redirect("/urls");
+  res.render("/urls");
 });
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   //=> added delete method
 
