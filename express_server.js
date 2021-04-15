@@ -176,7 +176,7 @@ app.post("/logout", (req, res) => {
   // const username = req.params.username;
   res.clearCookie("user_id");
 
-  res.redirect("/urls");
+  res.redirect("/userLogin");
 });
 
 app.post("/urls/:shortURL/update", (req, res) => {
