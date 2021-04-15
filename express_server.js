@@ -131,7 +131,7 @@ app.post("/userReg", (req, res) => {
 });
 app.get("/userLogin", (req, res) => {
   const user = req.cookies["user_id"];
-  templateVars={ user : user}
+  templateVars={ user : ""}
   res.render("user_login",templateVars);
 });
 
@@ -165,10 +165,13 @@ app.get("/urls", (req, res) => {
   const url = getShortUrlById(userId)
   // console.log(">>>> ",url);
   // if(userId = )
+  if( userId ){
   const templateVars = { urls: url, user: user };
   console.log("> ",templateVars);
 
   res.render("urls_index", templateVars);
+  }
+  res.status(403).send("not authorized action")
   
 });
 app.post("/urls", (req, res) => {
@@ -189,8 +192,11 @@ app.get("/urls/new", (req, res) => {
   const user = getEmailByUserId(userId);
 
   // console.log(">>>>",req.params)
+  if( userId ){
   const templateVars = { user: user };
   res.render("urls_new", templateVars);
+  }
+  res.status(403).send("not authorized action")
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -244,15 +250,30 @@ app.post("/logout", (req, res) => {
 
   res.redirect("/userLogin");
 });
-app.get("/", (req, res) => {
-  // const user = req.cookies["user_id"];
-  // // console.log(">>>>",user)
+// app.get("/", (req, res) => {
+//   // const user = req.cookies["user_id"];
+//   // // console.log(">>>>",user)
   
-  // templateVars={ user : user}
-  // res.render("user_login",templateVars);
-  res.redirect("/userLogin");
-})
+//   // templateVars={ user : user}
+//   // res.render("user_login",templateVars);
+//   res.redirect("/userLogin");
+// })
+app.get("/", (req, res) => {
+  const userId = req.cookies["user_id"];
+  // console.log(req.cookies)
+  // const user = getEmailByUserId(userId);
+  const urls = {};
+  for (let ele in urlDatabase){
+    urls[ele] = urlDatabase[ele]["longURL"]
 
+  }
+    const templateVars = { urls: urls ,user : ""}
+  // console.log(">>>> ",url);
+  // if(userId = )
+  // console.log("> ",templateVars);
+
+  res.render("home",templateVars);  
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
