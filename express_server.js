@@ -60,8 +60,8 @@ function loginLookup(email, pass) {
 }
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 const users = {
   userRandomID: {
@@ -110,9 +110,10 @@ console.log(req.body)
 app.post("/userReg", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
-  if (emailLookup(email, password) === "nothing") {
+  if (email === "" || password === "") {
     res.status(400).send("Enter Valid Credentials"); //=> credential & email lookup in database
   }
+
   if (emailLookup(email, password) === "exist") {
     res.status(400).send("Email Already Exists");
   }
