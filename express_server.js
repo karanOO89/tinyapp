@@ -1,11 +1,23 @@
+const {
+  getUserByEmail,
+  generateRandomString,
+  generateRandomID,
+  loginLookup,
+  findIdByEmail,
+  getShortUrlById,
+  getEmailByUserId,
+  bcrypt,
+} = require("./helpers");
+
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
-const { getUserByEmail } = require("./helpers");
 const bodyParser = require("body-parser");
 const cookie = require("cookie-session");
-app.use(bodyParser.urlencoded({ extended: true }));
+const PORT = 8080;
+const morganMiddleware = morgan("dev");
 
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cookie({
     name: "session",
@@ -13,57 +25,8 @@ app.use(
   })
 );
 
-const PORT = 8080;
 app.set("view engine", "ejs");
-
-const morganMiddleware = morgan("dev");
 app.use(morganMiddleware);
-const bcrypt = require("bcrypt");
-
-const generateRandomString = () => {
-  let result = "";
-  const length = 6;
-  const chars =
-    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  for (let i = length; i > 0; --i)
-    result += chars[Math.floor(Math.random() * chars.length)];
-  return result;
-};
-const generateRandomID = () => {
-  let result = "";
-  const length = 2;
-  const chars =
-    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  for (let i = length; i > 0; --i)
-    result += chars[Math.floor(Math.random() * chars.length)];
-  return result;
-};
-
-const loginLookup = (email, pass) => {
-  const user = getUserByEmail(email, users);
-  return user && bcrypt.compareSync(pass, user["password"]);
-};
-const findIdByEmail = (email) => {
-  const user = getUserByEmail(email, users);
-  if (user) return user["id"];
-};
-const getShortUrlById = (userId) => {
-  let keys = Object.keys(urlDatabase);
-  let obj = {};
-  for (let uid of keys) {
-    if (urlDatabase[uid]["userID"] === userId) {
-      obj[uid] = urlDatabase[uid]["longURL"];
-    }
-  }
-  return obj;
-};
-const getEmailByUserId = (userId) => {
-  for (let id in users) {
-    if (users[id]["id"] === userId) {
-      return users[id]["email"];
-    }
-  }
-};
 
 const urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
@@ -76,7 +39,7 @@ const users = {
     password: bcrypt.hashSync("123", 10),
   },
 };
-
+//-------------Registration--------------------
 app.get("/userReg", (req, res) => {
   const user = req.session["user_id"];
   if (!user) {
@@ -90,9 +53,6 @@ app.get("/userReg", (req, res) => {
       );
   }
 });
-
-
-
 app.post("/userReg", (req, res) => {
   let email = req.body.email;
   let Password = req.body.password;
@@ -102,8 +62,9 @@ app.post("/userReg", (req, res) => {
   if (email === "" || password === "") {
     return res.status(400).send("Enter Valid Credentials"); //=> credential & email lookup in database
   }
-  if (getUserByEmail(email,users)) {
-    
+  if (getUserByEmail(email, users)) {
+    //=> to find user existence in users database
+
     return res.status(400).send("Email Already Exists");
   }
   let id = generateRandomID();
@@ -112,8 +73,7 @@ app.post("/userReg", (req, res) => {
   return res.redirect("/urls");
 });
 
-
-
+//-------------Login--------------------
 app.get("/userLogin", (req, res) => {
   const user = req.session["user_id"];
   if (!user) {
@@ -128,23 +88,22 @@ app.post("/userLogin", (req, res) => {
   const email = req.body.email.trim();
   const password = req.body.password;
   if (email === "" || password === "") {
-    return res.status(400).send("Enter Valid Credentials"); //=> credential & email lookup in database
+    return res.status(400).send("Enter Valid Credentials");
   }
-  if (!loginLookup(email, password)) {
+  if (!loginLookup(email, password, users)) {
+    //=> to verify whether user exists in users database or not
     return res.status(400).send("Either Email Or Password Is Incorrect");
   }
-  const id = findIdByEmail(email);
+  const id = findIdByEmail(email, users); //=> extracting id by email from users database
   req.session["user_id"] = id;
   return res.redirect("/urls");
-
 });
 
-//user registration
-
+//-------------Urls main--------------------
 app.get("/urls", (req, res) => {
-  const userId = req.session["user_id"];                   //=>main /url pages(GET)
-  const user = getEmailByUserId(userId);
-  const url = getShortUrlById(userId);
+  const userId = req.session["user_id"];
+  const user = getEmailByUserId(userId, users); //=> finding email via userID
+  const url = getShortUrlById(userId, urlDatabase); //=> extracting shorturl from urldatabase by id
   if (userId) {
     const templateVars = { urls: url, user: user };
     return res.render("urls_index", templateVars);
@@ -153,16 +112,18 @@ app.get("/urls", (req, res) => {
   }
 });
 app.post("/urls", (req, res) => {
-  const userID = req.session["user_id"];                    //=>main /url pages(POST)
+  const userID = req.session["user_id"];
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = { longURL, userID };
 
   return res.redirect(`/urls`);
 });
+
+//-------------Urls/ new creation--------------------
 app.get("/urls/new", (req, res) => {
   const userId = req.session["user_id"];
-  const user = getEmailByUserId(userId);
+  const user = getEmailByUserId(userId, users); //=> finding email via userID
 
   if (userId) {
     const templateVars = { user: user };
@@ -171,9 +132,10 @@ app.get("/urls/new", (req, res) => {
   return res.status(403).send("Login To Access This Page");
 });
 
+//-------------Url short redirection for updation --------------------
 app.get("/urls/:shortURL", (req, res) => {
   const userId = req.session["user_id"];
-  const user = getEmailByUserId(userId);
+  const user = getEmailByUserId(userId, users); //=> finding email via userID
   if (urlDatabase[req.params.shortURL]["userID"] === userId) {
     const templateVars = {
       shortURL: req.params.shortURL,
@@ -185,13 +147,13 @@ app.get("/urls/:shortURL", (req, res) => {
   return res.status(403).send("Login To Access This Page");
 });
 app.post("/urls/:shortURL/update", (req, res) => {
-  //=> added update method
   const toUpdateUrl = req.body.longURL;
   urlDatabase[req.params.shortURL]["longURL"] = toUpdateUrl;
 
   return res.redirect("/urls");
 });
 
+//-------------/u/shorturl--------------------
 app.get("/u/:shortURL", (req, res) => {
   //=> extracting the original long url from database
 
@@ -199,23 +161,23 @@ app.get("/u/:shortURL", (req, res) => {
   return res.redirect(longURL);
 });
 
+//-------------delete Method--------------------
 app.post("/urls/:shortURL/delete", (req, res) => {
-  //=> added delete method
-
   const urlToDelete = req.params.shortURL;
   delete urlDatabase[urlToDelete];
   return res.redirect("/urls");
 });
 
+//-------------logout--------------------
 app.post("/logout", (req, res) => {
   req.session = null;
 
   return res.redirect("/");
 });
-
+//-------------homepage ("/")--------------------
 app.get("/", (req, res) => {
   const userId = req.session["user_id"];
-  const user = getEmailByUserId(userId);
+  const user = getEmailByUserId(userId, users); //=> finding email via userID
 
   const urls = {};
   for (let ele in urlDatabase) {
@@ -225,9 +187,8 @@ app.get("/", (req, res) => {
     const templateVars = { urls: urls, user: user };
     return res.render("urls_index", templateVars);
   } else {
-    return res.redirect('/userLogin');
+    return res.redirect("/userLogin");
   }
- 
 });
 
 app.listen(PORT, () => {
